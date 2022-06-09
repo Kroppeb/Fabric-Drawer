@@ -2,9 +2,7 @@ package utils
 
 import drawer.*
 import io.netty.buffer.Unpooled
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.*
 import kotlinx.serialization.modules.EmptyModule
 import kotlinx.serialization.modules.SerialModule
 import net.minecraft.nbt.CompoundTag
@@ -31,7 +29,7 @@ class TestCaseInit {
     }
 
     fun <T : Any> T.with(serializer: KSerializer<T>, module: SerialModule) {
-        cases.add(EagerCase(this, serializer, module))
+        cases.add(EagerCase(this, serializer, module ))
     }
 
     infix fun <T : Any> (() -> T).with(serializer: KSerializer<T>) {
@@ -41,7 +39,7 @@ class TestCaseInit {
 //    class Moduleable
 }
 
-fun testCases(init: TestCaseInit.() -> Unit) = TestCaseInit().apply(init)
+fun makeTestCases(init: TestCaseInit.() -> Unit) = TestCaseInit().apply(init)
 
 data class LazyCase<T : Any>(
     val lazyObj: () -> T,
@@ -63,7 +61,7 @@ data class EagerCase<T : Any>(
     override val name: String = obj.javaClass.simpleName
 ) : Case<T>
 
-val testCases = testCases {
+val testCases = makeTestCases {
     CityData(1, "New York") with CityData.serializer()
     StreetData(2, "Broadway", CityData(1, "New York")) with StreetData.serializer()
     StreetData2(2, "Broadway", CityData(1, "New York")) with StreetData2.serializer()
@@ -84,6 +82,47 @@ val testCases = testCases {
     itemStacks with ItemStacks.serializer()
     ingredients with Ingredients.serializer()
     defaultedLists with DefaultedLists.serializer()
+
+    nonnullableListNoNull with NonNullableLists.serializer()
+    nullableListNoNull with NullableLists.serializer()
+    nullableListWithNulls with NullableLists.serializer()
+    listsEndingWithNull with NullableLists.serializer()
+
+    beats with (Game.serializer() to Game.serializer()).map
+    signToValue with (Sign.serializer() to Int.serializer()).map
+    byteToSign with Sign.serializer().list
+    gameToString with (Game.serializer() to String.serializer()).map
+    stringToGame with (String.serializer() to Game.serializer()).map
+    idToEmotion with (Int.serializer() to Emotion.serializer()).map
+    emotionToString with (Emotion.serializer() to String.serializer()).map
+}.cases
+
+val squaredItems = mapOf(
+    testSealedData, testTypedSealedData, testEnumData,
+    testByteData,
+            testShortData,
+            testIntData,
+            testLongData,
+            testFloatData,
+            testDoubleData,
+            testNullableByteData,
+            testNullableShortData,
+            testNullableIntData,
+            testNullableLongData,
+            testNullableFloatData,
+            testNullableDoubleData,
+            testStringData,
+            testNullableStringData
+    ,testIntLists
+) as Map<List<Any?>, KSerializer<Any?>>
+
+val testMaps = makeTestCases{
+    /*for((keyItems, keySerializer) in squaredItems){
+        for((valueItems, valueSerializer) in squaredItems){
+            keyItems.zip(valueItems.asReversed()).toMap() with (keySerializer to valueSerializer).map
+        }
+    }*/
+    testLongData.first.zip(testLongData.first).toMap() with (testLongData.second to testLongData.second).map
 }.cases
 
 
@@ -126,13 +165,14 @@ fun testCase(
 @Suppress("UNCHECKED_CAST")
 fun testMethod(
     method: (KSerializer<Any>, Any, SerialModule) -> TestResult,
-    verbose: Boolean = true
+    verbose: Boolean = true,
+    items: List<Case<*>> = testCases
 ): Pair<Int, Int> {
     if (verbose) println("==============================================")
     println("Running with ${(method as KFunction<*>).name}")
     var totalCount = 0
     var failCount = 0
-    testCases.forEach { case ->
+    items.forEach { case ->
         if (verbose) println()
         if (!testCase(case as Case<Any>, method, verbose))
             failCount++

@@ -24,9 +24,11 @@
 package utils
 
 import drawer.*
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.*
 import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.internal.nullable
 import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.serializer
 import net.minecraft.client.sound.SoundInstance
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
@@ -40,6 +42,8 @@ import net.minecraft.util.collection.DefaultedList
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import java.util.*
+import kotlin.math.nextDown
+import kotlin.math.nextUp
 
 // simple data objects
 
@@ -562,3 +566,286 @@ val defaultedLists = {
         DefaultedList.copyOf(0, 1, 2, 3, 4, 5, 6, 7, 8)
     )
 }
+
+@Serializable
+data class NullableLists(
+    val ints: List<Int?>,
+    val shorts: List<Short?>,
+    val bytes: List<Byte?>,
+    val longs: List<Long?>,
+    val floats: List<Float?>,
+    val doubles: List<Double?>
+)
+
+@Serializable
+data class NonNullableLists(
+    val ints: List<Int>,
+    val shorts: List<Short>,
+    val bytes: List<Byte>,
+    val longs: List<Long>,
+    val floats: List<Float>,
+    val doubles: List<Double>
+)
+
+val nonnullableListNoNull = NonNullableLists(
+    listOf(-5, 0, 1, -1, Int.MIN_VALUE, Int.MAX_VALUE, 2, -2),
+    listOf(-5, 0, 1, -1, Short.MIN_VALUE, Short.MAX_VALUE, 2, -2),
+    listOf(-5, 0, 1, -1, Byte.MIN_VALUE, Byte.MAX_VALUE, 2, -2),
+    listOf(-5, 0, 1, -1, Long.MIN_VALUE, Long.MAX_VALUE, 2, -2),
+    listOf(
+        -5.0f,
+        0.0f,
+        // -0.0f, // nbt doesn't handle this correctly
+        1.0f,
+        -1.0f,
+        0.5f,
+        -0.5f,
+        2.0f,
+        -2.0f,
+        Float.MAX_VALUE,
+        -Float.MAX_VALUE,
+        Float.MIN_VALUE,
+        -Float.MIN_VALUE,
+        Float.MAX_VALUE.nextDown(),
+        (-Float.MAX_VALUE).nextUp(),
+        Float.MIN_VALUE.nextUp(),
+        (-Float.MIN_VALUE).nextDown(),
+        Float.NEGATIVE_INFINITY,
+        Float.POSITIVE_INFINITY,
+        Float.NaN
+    ),
+    listOf(
+        -5.0,
+        0.0,
+        // -0.0, // nbt doesn't handle this correctly
+        1.0,
+        -1.0,
+        0.5,
+        -0.5,
+        2.0,
+        -2.0,
+        Double.MAX_VALUE,
+        -Double.MAX_VALUE,
+        Double.MIN_VALUE,
+        -Double.MIN_VALUE,
+        Double.MAX_VALUE.nextDown(),
+        (-Double.MAX_VALUE).nextUp(),
+        Double.MIN_VALUE.nextUp(),
+        (-Double.MIN_VALUE).nextDown(),
+        Double.NEGATIVE_INFINITY,
+        Double.POSITIVE_INFINITY,
+        Double.NaN
+    )
+)
+
+val nullableListNoNull = NullableLists(
+    listOf(-5, 0, 1, -1, Int.MIN_VALUE, Int.MAX_VALUE, 2, -2),
+    listOf(-5, 0, 1, -1, Short.MIN_VALUE, Short.MAX_VALUE, 2, -2),
+    listOf(-5, 0, 1, -1, Byte.MIN_VALUE, Byte.MAX_VALUE, 2, -2),
+    listOf(-5, 0, 1, -1, Long.MIN_VALUE, Long.MAX_VALUE, 2, -2),
+    listOf(
+        -5.0f,
+        0.0f,
+        // -0.0f, // nbt doesn't handle this correctly
+        1.0f,
+        -1.0f,
+        0.5f,
+        -0.5f,
+        2.0f,
+        -2.0f,
+        Float.MAX_VALUE,
+        -Float.MAX_VALUE,
+        Float.MIN_VALUE,
+        -Float.MIN_VALUE,
+        Float.MAX_VALUE.nextDown(),
+        (-Float.MAX_VALUE).nextUp(),
+        Float.MIN_VALUE.nextUp(),
+        (-Float.MIN_VALUE).nextDown(),
+        Float.NEGATIVE_INFINITY,
+        Float.POSITIVE_INFINITY,
+        Float.NaN
+    ),
+    listOf(
+        -5.0,
+        0.0,
+        // -0.0, // nbt doesn't handle this correctly
+        1.0,
+        -1.0,
+        0.5,
+        -0.5,
+        2.0,
+        -2.0,
+        Double.MAX_VALUE,
+        -Double.MAX_VALUE,
+        Double.MIN_VALUE,
+        -Double.MIN_VALUE,
+        Double.MAX_VALUE.nextDown(),
+        (-Double.MAX_VALUE).nextUp(),
+        Double.MIN_VALUE.nextUp(),
+        (-Double.MIN_VALUE).nextDown(),
+        Double.NEGATIVE_INFINITY,
+        Double.POSITIVE_INFINITY,
+        Double.NaN
+    )
+)
+
+val nullableListWithNulls = NullableLists(
+    listOf(-5, 0, 1, null, -1, Int.MIN_VALUE, Int.MAX_VALUE, 2, null, -2),
+    listOf(-5, 0, 1, -1, null, Short.MIN_VALUE, null, Short.MAX_VALUE, 2, -2),
+    listOf(-5, 0, null, 1, -1, Byte.MIN_VALUE, Byte.MAX_VALUE, 2, -2, null),
+    listOf(-5, null, 0, 1, -1, null, Long.MIN_VALUE, Long.MAX_VALUE, 2, -2),
+    listOf(
+        -5.0f,
+        0.0f,
+        // -0.0f, // nbt doesn't handle this correctly
+        null,
+        1.0f,
+        -1.0f,
+        0.5f,
+        -0.5f,
+        null,
+        2.0f,
+        -2.0f
+    ),
+    listOf(
+        -5.0,
+        0.0,
+        null,
+        // -0.0, // nbt doesn't handle this correctly
+        1.0,
+        -1.0,
+        0.5,
+        -0.5,
+        2.0,
+        null,
+        -2.0,
+        null
+    )
+)
+
+val listsEndingWithNull = NullableLists(
+    listOf(0, null, null, null, null, null, null, null),
+    listOf<Short?>(0, null, null, null, null, null, null, null, null),
+    listOf<Byte?>(0, null, null, null, null, null, null, null, null, null),
+    listOf<Long?>(0, null, null, null, null, null, null, null, null, null, null),
+    listOf<Float?>(0.0f, null, null, null, null, null, null, null, null, null, null),
+    listOf<Double?>(0.0, null, null, null, null, null, null, null, null, null, null, null)
+)
+
+@Serializable
+enum class Sign {
+    POSITIVE, ZERO, NEGATIVE
+}
+
+
+@Serializable
+enum class Game {
+    ROCK, PAPER, SCISSORS
+}
+
+
+val beats = mutableMapOf(
+    Game.ROCK to Game.SCISSORS,
+    Game.SCISSORS to Game.PAPER,
+    Game.PAPER to Game.ROCK
+)
+
+val signToValue = Sign.values().toList().associateWith { 1 - it.ordinal }
+
+val byteToSign = (0..255).map {
+    when (it) {
+        0 -> Sign.ZERO
+        in 1..127 -> Sign.POSITIVE
+        else -> Sign.NEGATIVE
+    }
+}
+
+val gameToString =
+    Game.values().toList().associateWith { it.toString().toLowerCase() } // TODO remove the list step in 1.4
+val stringToGame = gameToString.entries.associate { it.value to it.key }
+
+
+@Suppress("EnumEntryName")
+@Serializable
+enum class Emotion {
+    `😀`, `😁`, `😂`, `🤣`, `😃`, `😄`, `😅`, `😆`, `😉`, `😊`, `😋`, `😎`, `😍`, `😘`, `🥰`, `😗`, `😙`, `😚`, `☺️`, `🙂`, `🤗`, `🤩`, `🤔`, `🤨`, `😐`, `😑`, `😶`, `🙄`, `😏`, `😣`, `😥`, `😮`, `🤐`, `😯`, `😪`, `😫`, `😴`, `😌`, `😛`, `😜`, `😝`, `🤤`, `😒`, `😓`, `😔`, `😕`, `🙃`, `🤑`, `😲`, `☹️`, `🙁`, `😖`, `😞`, `😟`, `😤`, `😢`
+}
+
+val idToEmotion = Emotion.values().associateBy { (it.name.hashCode() * 8455969985695 % 3659885).toInt() }
+val emotionToString = idToEmotion.toList().associate { (id, value) -> value to "$id: ${value.name}" }
+
+@Serializable
+sealed class SealedClass {
+	@Serializable
+	object A : SealedClass()
+
+	@Serializable
+	data class B(val t: Int) : SealedClass()
+
+	@Serializable
+	data class C(val s: String) : SealedClass()
+
+	@Serializable
+	data class D(val u: Unit) : SealedClass()
+
+	@Serializable
+	data class E(val p: Int? = null) : SealedClass()
+}
+
+@Serializable
+sealed class TypedSealedClass<out L, out R> {
+	@Serializable
+	object Fail : TypedSealedClass<String, Int>() // Nothing doesn't seem to work?
+
+	@Serializable
+	data class Error<out L>(val error: L) : TypedSealedClass<L, Int>()
+
+	@Serializable
+	data class Success<out R>(val value: R) : TypedSealedClass<String, R>()
+
+	@Serializable
+	data class Warning<out L, out R>(val warning: L, val value: R) : TypedSealedClass<L, R>()
+
+	@Serializable
+	data class Partial<out L, out R>(val error: L, val partial: R) : TypedSealedClass<L, R>()
+}
+
+private infix fun <E> List<E>.with(serializer: KSerializer<E>) = this to serializer
+
+val testSealedData =
+	listOf(
+		SealedClass.A,
+		SealedClass.B(0),
+		SealedClass.C("hello"),
+		SealedClass.D(Unit),
+		SealedClass.E(null)
+	) with SealedClass.serializer()
+
+val testTypedSealedData = listOf(
+	TypedSealedClass.Fail,
+	TypedSealedClass.Error("Server caught fire"),
+	TypedSealedClass.Success(123654),
+	TypedSealedClass.Warning("Server is very busy", 123654),
+	TypedSealedClass.Partial("Server is too busy", 123000)
+) with TypedSealedClass.serializer(String.serializer(), Int.serializer())
+
+val testEnumData = Emotion.values().toList().take(5) with Emotion.serializer()
+
+val testByteData = listOf<Byte>(0, -5, 9, 1, Byte.MAX_VALUE) with Byte.serializer()
+val testShortData = listOf<Short>(0, -5, 9, 1, Short.MAX_VALUE) with Short.serializer()
+val testIntData = listOf<Int>(0, -5, 9, 1, Int.MAX_VALUE) with Int.serializer()
+val testLongData = listOf<Long>(0, -5, 9, 1, Long.MAX_VALUE) with Long.serializer()
+val testFloatData = listOf<Float>(0.0f, -5.0f, 9.0f, 1.0f, Float.MIN_VALUE) with Float.serializer()
+val testDoubleData = listOf<Double>(0.0, -5.0, 9.0, 1.0, Double.MIN_VALUE) with Double.serializer()
+
+val testNullableByteData = listOf<Byte?>(0, -5, null, 1, Byte.MAX_VALUE) with Byte.serializer().nullable
+val testNullableShortData = listOf<Short?>(0, -5, null, 1, Short.MAX_VALUE) with Short.serializer().nullable
+val testNullableIntData = listOf<Int?>(0, -5, null, 1, Int.MAX_VALUE) with Int.serializer().nullable
+val testNullableLongData = listOf<Long?>(0, -5, null, 1, Long.MAX_VALUE) with Long.serializer().nullable
+val testNullableFloatData = listOf<Float?>(0.0f, null, 9.0f, 1.0f, Float.MIN_VALUE) with Float.serializer().nullable
+val testNullableDoubleData = listOf<Double?>(0.0, null, 9.0, 1.0, Double.MIN_VALUE) with Double.serializer().nullable
+
+val testStringData = listOf("Hello", "there", "how are you?", "one two three", "") with String.serializer()
+val testNullableStringData = listOf("Hello", null, "how are you?", "one two three", "") with String.serializer().nullable
+
+val testIntLists = (0..4).map{((it * 5) until it * it + it*5).toList()} with Int.serializer().list

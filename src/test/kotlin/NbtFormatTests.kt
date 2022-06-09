@@ -108,3 +108,4 @@ class NestedNbtFormatTests {
         println(actual)
     }
 }
+
